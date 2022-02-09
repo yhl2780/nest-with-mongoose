@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>상품리스트</title>
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+</head>
+<body>
+  <div style="width: 900px; ">
+    <form action="/" method="get" style="border: 1px solid rgba(0,0,0, 0.7); padding: 30px; ">
+      <h2>검색폼</h2>
+      <p>
+        <label>
+          검색어 : <input type="text" name="searchText" value="<%= search.searchText%>"> *카테고리, 상품명
+        </label>
+      </p>
+      <p>
+        가격 :
+        <label>
+          <input type="radio" value="0" name="searchPrice" <% if(search.searchPrice === undefined || search.searchPrice === '0'){%>checked<%}%>> 전체
+        </label>
+        <label>
+          <input type="radio" value="1" name="searchPrice" <% if(search.searchPrice === '1'){%>checked<%}%>> 1000원 미만
+        </label>
+        <label>
+          <input type="radio" value="2" name="searchPrice" <% if(search.searchPrice === '2'){%>checked<%}%>> 1000원 이상
+        </label>
+      </p>
+      <p>
+        <label>
+          <input type="submit" value="검색">
+        </label>
+      </p>
+    </form>
+    <br>
+    <h3>상품리스트입니다 ^___^ ㅎ</h3>
+    <ul style="height: 440px; overflow-x: hidden; overflow-y: scroll;">
+      <% for(let i = 0, x = list.length; i < x; i++){%>
+      <li>
+        <form id="modifyForm<%=i%>">
+          <p>
+            <label>
+              카테고리 : <input type="text" name="category" value="<%=list[i].category%>">
+            </label>
+            <label>
+              상품명 : <input type="text" name="productName" value="<%=list[i].productName%>">
+            </label>
+            <label>
+              가격 : <input type="number" name="productPrice" value="<%=list[i].productPrice%>">
+            </label>
+            <label>
+              <button type="button" class="modifyBtn" data-target="#modifyForm<%=i%>">수정</button>
+            </label>
+            <label>
+              <button type="button" class="deleteBtn" data-index="<%=list[i].id%>">삭제</button>
+            </label>
+          </p>
+          <input type="hidden" name="id" value="<%=list[i].id%>">
+        </form>
+      </li>
+      <% }%>
+    </ul>
+
+    <br>
+    <form method="post" id="createForm" style="border: 1px solid rgba(0,0,0, 0.7); padding: 30px; ">
+      <h2>등록폼</h2>
+      <p>
+        <label>
+          카테고리 : <input type="text" name="category">
+        </label>
+      </p>
+      <p>
+        <label>
+          상품명 : <input type="text" name="productName">
+        </label>
+      </p>
+      <p>
+        <label>
+          가격 : <input type="number" name="productPrice">
+        </label>
+      </p>
+      <button type="button" id="submitBtn">등록</button>
+    </form>
+  </div>
+<script>
+  //등록
+  document.querySelector('#submitBtn').addEventListener('click', function(){
+    formSubmit('#createForm', '/create', 'post');
+  })
+  //수정
+  document.querySelectorAll('.modifyBtn').forEach(function(node){
+    node.addEventListener('click', function(){
+      formSubmit(node.dataset.target, '/update', 'put');
+    })
+  })
+  //삭제
+  document.querySelectorAll('.deleteBtn').forEach(function(node){
+    node.addEventListener('click', function(){
+      //delete 라서 data 사용 불가
+      axios.delete('/delete', {
+        params: { id: this.dataset.index }
+      }).then(function(res){
+        window.location.replace('/');
+      }).catch(function(e){
+        console.log(e);
+      })
+    })
+  })
+  //폼 전송
+  function formSubmit(target, url, method = 'get'){
+    const elements = document.querySelector(target).childNodes;
+    let obj = {};
+    //formData not working
+    elements.forEach(function(node){
+      if(node.nodeName !== '#text'){
+        if(node.nodeName === 'INPUT'){
+          obj[node.name] = node.value
+        }else{
+          let findNode = node.getElementsByTagName('input');
+          Array.from(findNode).forEach(function(childNode){
+            childNode ? obj[childNode.name] = childNode.value : ''
+          })
+        }
+      }
+    })
+    // 속성값 참고 url https://sangcho.tistory.com/entry/axios
+    // doc https://www.npmjs.com/package/axios
+    axios({
+      method: method, //요청 방식
+      url: url,       //url
+      data: obj,
+    }).then(function(res){
+      //수정이면 필터유지, 등록 및 삭제는 필터삭제
+      method === 'put' ? window.location.reload() : window.location.replace('/')
+    }).catch(function(e){
+      console.log(e);
+    })
+  }
+</script>
+</body>
+</html>
